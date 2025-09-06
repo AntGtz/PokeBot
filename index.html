@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taller de Poke-Chatbot con IA en AWS y Telegram</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F0F4F8;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #0088cc, #FF6B6B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .step-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #073B4C;
+            transform: translateX(-50%);
+        }
+        .step-dot {
+            position: absolute;
+            left: 50%;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: white;
+            border: 4px solid #073B4C;
+            transform: translateX(-50%);
+        }
+        .arrow {
+            font-size: 2rem;
+            line-height: 1;
+            color: #118AB2;
+        }
+    </style>
+</head>
+<body class="text-[#073B4C]">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-6xl font-black mb-2 gradient-text">Chatea con tu Pokédex IA en Telegram</h1>
+            <p class="text-lg md:text-xl text-[#118AB2]">Un resumen visual del taller que conecta Telegram con AWS Bedrock, SAM, y la PokeAPI.</p>
+        </header>
+
+        <main>
+             <section id="final-product" class="mb-16">
+                 <h2 class="text-3xl font-bold text-center mb-8">El Objetivo Final: Una Conversación con la Pokédex</h2>
+                 <p class="max-w-3xl mx-auto text-center mb-10 text-gray-600">
+                    Al terminar el taller, tendrás un bot personal en Telegram que puede darte información detallada y una descripción única generada por IA sobre cualquier Pokémon que le pidas.
+                </p>
+                 <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <div class="w-full max-w-sm mx-auto">
+                        <div class="flex items-end mb-4">
+                            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0">T</div>
+                            <div class="ml-3 bg-gray-200 p-3 rounded-lg rounded-bl-none">
+                                <p class="text-sm">Charizard</p>
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-end mb-2">
+                            <div class="mr-3 bg-blue-500 text-white p-2 rounded-lg rounded-br-none text-center">
+                                <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png" alt="Charizard" class="w-48 h-48 object-cover mx-auto" style="image-rendering: pixelated;">
+                            </div>
+                        </div>
+                        <div class="flex items-end justify-end">
+                             <div class="mr-3 bg-blue-500 text-white p-3 rounded-lg rounded-br-none max-w-xs">
+                                <p class="text-sm">Charizard es un imponente Pokémon de tipo fuego y volador. Es famoso por su habilidad 'mar llamas', que potencia sus ataques de fuego cuando su salud es baja. ¡Su aliento de fuego es tan caliente que puede derretir rocas!</p>
+                            </div>
+                            <div class="w-8 h-8 rounded-full bg-[#FF6B6B] flex items-center justify-center text-white font-bold flex-shrink-0">IA</div>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+            
+            <section id="architecture" class="mb-16">
+                <h2 class="text-3xl font-bold text-center mb-8">La Arquitectura Serverless</h2>
+                <p class="max-w-3xl mx-auto text-center mb-10 text-gray-600">
+                    Nuestra aplicación es un chatbot conversacional. Un usuario habla con el bot en Telegram, y una cadena de servicios en AWS se encarga de crear una respuesta inteligente y visual sin gestionar un solo servidor.
+                </p>
+                <div class="bg-white rounded-lg shadow-lg p-6 md:p-8">
+                    <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4 text-center">
+                        <div class="flex flex-col items-center">
+                            <div class="text-4xl mb-2">📱</div>
+                            <h3 class="font-bold">Usuario en Telegram</h3>
+                            <p class="text-sm text-gray-500">Escribe "Pikachu"</p>
+                        </div>
+                        <div class="arrow self-center hidden md:block">→</div>
+                        <div class="flex flex-col items-center">
+                            <div class="text-4xl mb-2">☁️</div>
+                            <h3 class="font-bold">API Gateway & Lambda</h3>
+                            <p class="text-sm text-gray-500">(vía Webhook)</p>
+                        </div>
+                        <div class="arrow self-center hidden md:block">→</div>
+                        <div class="flex flex-col items-center">
+                            <div class="text-4xl mb-2">🌐</div>
+                            <h3 class="font-bold">PokeAPI</h3>
+                            <p class="text-sm text-gray-500">Obtiene datos y foto</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-center my-4">
+                        <div class="arrow transform rotate-90 md:rotate-0">↓</div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-5 items-center gap-4 text-center">
+                        <div class="flex flex-col items-center col-span-1 md:col-start-5">
+                            <div class="text-4xl mb-2">🖼️</div>
+                            <h3 class="font-bold">Respuesta en Telegram</h3>
+                            <p class="text-sm text-gray-500">Envía foto y texto</p>
+                        </div>
+                        <div class="arrow self-center hidden md:block transform rotate-180 md:col-start-4 md:row-start-1">→</div>
+                         <div class="flex flex-col items-center col-span-1 md:col-start-3">
+                            <div class="text-4xl mb-2">🧠</div>
+                            <h3 class="font-bold">Amazon Bedrock</h3>
+                            <p class="text-sm text-gray-500">Crea el resumen</p>
+                        </div>
+                        <div class="arrow self-center hidden md:block transform -rotate-90 md:rotate-180 md:col-start-2 md:row-start-1">↓</div>
+                        <div class="flex flex-col items-center col-span-1 md:col-start-1">
+                            <div class="text-4xl mb-2">🔑</div>
+                            <h3 class="font-bold">Secrets Manager</h3>
+                            <p class="text-sm text-gray-500">Provee el Token</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="process" class="mb-16">
+                <h2 class="text-3xl font-bold text-center mb-12">El Proceso de Construcción del Taller</h2>
+                <div class="relative">
+                    <div class="step-line hidden md:block"></div>
+                    <div class="space-y-12 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-12">
+                        <div class="md:text-right">
+                            <div class="md:relative md:pr-12">
+                                <div class="step-dot hidden md:block md:right-0 md:translate-x-1/2"></div>
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <h3 class="text-xl font-bold text-[#FF6B6B]">1. Crear el Bot y el Secreto</h3>
+                                    <p class="text-gray-600">Usamos BotFather en Telegram para obtener el token y lo guardamos de forma segura en AWS Secrets Manager.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div></div>
+                        <div></div>
+                        <div class="md:text-left">
+                           <div class="md:relative md:pl-12">
+                                <div class="step-dot hidden md:block md:left-0 md:-translate-x-1/2"></div>
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <h3 class="text-xl font-bold text-[#FFD166]">2. Iniciar Proyecto en CloudShell</h3>
+                                    <p class="text-gray-600">Con `sam init`, creamos la estructura base de nuestra aplicación serverless sin instalar nada localmente.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="md:text-right">
+                            <div class="md:relative md:pr-12">
+                                <div class="step-dot hidden md:block md:right-0 md:translate-x-1/2"></div>
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <h3 class="text-xl font-bold text-[#06D6A0]">3. Escribir Código (IaC y Python)</h3>
+                                    <p class="text-gray-600">Definimos la infraestructura en `template.yaml` y la lógica del bot en `app.py`.</p>
+                                </div>
+                            </div>
+                        </div>
+                         <div></div>
+                        <div></div>
+                        <div class="md:text-left">
+                           <div class="md:relative md:pl-12">
+                                <div class="step-dot hidden md:block md:left-0 md:-translate-x-1/2"></div>
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <h3 class="text-xl font-bold text-[#118AB2]">4. Desplegar con AWS SAM</h3>
+                                    <p class="text-gray-600">Con `sam build` y `sam deploy`, SAM empaqueta y despliega todo en nuestra cuenta de AWS de forma automática.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="md:text-right">
+                            <div class="md:relative md:pr-12">
+                                <div class="step-dot hidden md:block md:right-0 md:translate-x-1/2"></div>
+                                <div class="bg-white p-6 rounded-lg shadow-lg">
+                                    <h3 class="text-xl font-bold text-[#073B4C]">5. Conectar el Webhook</h3>
+                                    <p class="text-gray-600">Le decimos a Telegram a qué URL de nuestra API debe enviar los mensajes del usuario.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="concepts" class="mb-16">
+                <h2 class="text-3xl font-bold text-center mb-8">Conceptos Clave Visualizados</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-bold text-center mb-4">Manejo Seguro de Secretos</h3>
+                        <p class="text-center text-gray-600 mb-4">Nunca se debe escribir un token o contraseña en el código. Usar un servicio como Secrets Manager es la práctica correcta.</p>
+                        <div class="chart-container">
+                            <canvas id="secretsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-lg">
+                        <h3 class="text-xl font-bold text-center mb-4">Agilidad con Infraestructura como Código</h3>
+                        <p class="text-center text-gray-600 mb-4">Definir la infraestructura con AWS SAM reduce drásticamente el tiempo y el esfuerzo en comparación con la configuración manual en la consola.</p>
+                        <div class="chart-container">
+                            <canvas id="iacSpeedChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const wrapLabel = (label) => {
+            const maxLength = 16;
+            if (label.length <= maxLength) return label;
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + ' ' + word).length > maxLength) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    currentLine = currentLine ? currentLine + ' ' + word : word;
+                }
+            }
+            if (currentLine) lines.push(currentLine);
+            return lines;
+        };
+
+        const tooltipTitleCallback = (tooltipItems) => {
+            const item = tooltipItems[0];
+            let label = item.chart.data.labels[item.dataIndex];
+            if (Array.isArray(label)) {
+                return label.join(' ');
+            }
+            return label;
+        };
+        
+        const palette = {
+            red: '#FF6B6B',
+            yellow: '#FFD166',
+            green: '#06D6A0',
+            blue: '#118AB2',
+            darkBlue: '#073B4C'
+        };
+
+        const secretsCtx = document.getElementById('secretsChart').getContext('2d');
+        new Chart(secretsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Token en el Código (Mala Práctica)', 'Token en Secrets Manager (Buena Práctica)'],
+                datasets: [{
+                    label: 'Nivel de Seguridad',
+                    data: [2, 10],
+                    backgroundColor: [palette.red, palette.green],
+                    borderRadius: 5,
+                    barPercentage: 0.5,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: tooltipTitleCallback
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10,
+                         ticks: {
+                            stepSize: 2
+                        }
+                    }
+                }
+            }
+        });
+
+        const iacSpeedCtx = document.getElementById('iacSpeedChart').getContext('2d');
+        new Chart(iacSpeedCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Configuración Manual', 'Despliegue con AWS SAM'],
+                datasets: [{
+                    label: 'Tiempo de Desarrollo (horas)',
+                    data: [8, 1.5],
+                    backgroundColor: [palette.red, palette.blue],
+                    borderRadius: 5,
+                    barPercentage: 0.6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: tooltipTitleCallback
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Tiempo estimado (horas)'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Taller de Poke-Chatbot con Bedrock, SAM y Telegram.
+
+Parameters:
+  TelegramSecretArn:
+    Type: String
+    Description: El ARN del secreto en AWS Secrets Manager que contiene el token del bot de Telegram.
+
+Resources:
+  ChatbotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      Timeout: 60
+      MemorySize: 512
+      Environment:
+        Variables:
+          TELEGRAM_SECRET_ARN: !Ref TelegramSecretArn
+      Events:
+        PokemonApi:
+          Type: Api
+          Properties:
+            Path: /pokemon
+            Method: post
+        TelegramWebhook:
+          Type: Api
+          Properties:
+            Path: /telegram
+            Method: post
+      Policies:
+        - Statement:
+          - Effect: Allow
+            Action:
+              - bedrock:InvokeModel
+            Resource: "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+        - Statement:
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Ref TelegramSecretArn
+
+Outputs:
+  ChatbotApiEndpoint:
+    Description: "URL de la API para el Poke-Chatbot (endpoint público y para webhook de Telegram)"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
+
