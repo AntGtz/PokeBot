@@ -20,22 +20,22 @@ Resources:
         Variables:
           TELEGRAM_SECRET_ARN: !Ref TelegramSecretArn
       Events:
-        PokemonApi:
-          Type: Api
-          Properties:
-            Path: /pokemon
-            Method: post
         TelegramWebhook:
           Type: Api
           Properties:
             Path: /telegram
+            Method: post
+        PublicApi:
+          Type: Api
+          Properties:
+            Path: /pokemon
             Method: post
       Policies:
         - Statement:
           - Effect: Allow
             Action:
               - bedrock:InvokeModel
-            Resource: "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0"
+            Resource: "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0"
         - Statement:
           - Effect: Allow
             Action:
@@ -44,6 +44,5 @@ Resources:
 
 Outputs:
   ChatbotApiEndpoint:
-    Description: "URL de la API para el Poke-Chatbot (endpoint público y para webhook de Telegram)"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
-
+    Description: "URL base de la API para nuestro Chatbot"
+    Value: !Sub "https://://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"

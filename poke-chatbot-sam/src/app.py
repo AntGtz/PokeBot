@@ -59,10 +59,10 @@ def get_pokemon_info(pokemon_name):
     Crea un resumen amigable y conciso (máximo 3 frases) como si fueras una entrada de la Pokédex."""
     
     # 4. Invocar a Bedrock
-    model_id = "anthropic.claude-3-sonnet-20240229-v1:0"
+    model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0"
     messages = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
     body_to_bedrock = json.dumps({
-        "anthropic_version": "bedrock-2023-05-31", "max_tokens": 200, "messages": messages
+        "anthropic_version": "bedrock-2023-05-31", "max_tokens": 900, "messages": messages
     })
     response = bedrock_runtime.invoke_model(modelId=model_id, body=body_to_bedrock)
     response_body = json.loads(response.get("body").read())
@@ -72,7 +72,7 @@ def get_pokemon_info(pokemon_name):
 
 def lambda_handler(event, context):
     print(f"Evento recibido: {json.dumps(event)}")
-    path = event.get("requestContext", {}).get("http", {}).get("path")
+    path = event.get("path")
     body = json.loads(event.get("body", "{}"))
 
     # --- RUTA PARA TELEGRAM ---
@@ -87,11 +87,9 @@ def lambda_handler(event, context):
         try:
             image_url, pokedex_entry = get_pokemon_info(pokemon_name)
             
-            # Enviar la foto
             if image_url:
                 call_telegram_api("sendPhoto", {"chat_id": chat_id, "photo": image_url})
             
-            # Enviar la descripción
             call_telegram_api("sendMessage", {"chat_id": chat_id, "text": pokedex_entry})
 
         except requests.exceptions.HTTPError as e:
@@ -114,5 +112,4 @@ def lambda_handler(event, context):
         except Exception as e:
             return {"statusCode": 500, "body": json.dumps({"error": str(e)})}
             
-    return {"statusCode": 404, "body": "Ruta no encontrada."}
-
+    return {"statusCode": 404, "body": json.dumps({"error": "Ruta no encontrada."})}
